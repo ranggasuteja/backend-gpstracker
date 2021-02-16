@@ -1,64 +1,95 @@
-var express = require('express');
+const app = require("express")();
+const http = require("http").Server(app);
+const io = require("socket.io")(http);
 
-var app = express();
+app.get("/", (req, res) => {
+  res.sendFile(__dirname + "/index.html");
+});
 
-//ngasih tau aplikasi bahwa kita pakai port 3000 dan berhasil berjalan
-var server = app.listen(3000, () => {
-    console.log('server is running on port', server.address().port);
-   });
+// Send current time to all connected clients
+function updateData(socket) {
+  var updateData = [
+    {
+      id: "DVC001",
+      latitude: Math.floor(Math.random() * (300 - 1 + 1) + 1),
+      longitude: Math.floor(Math.random() * (300 - 1 + 1) + 1),
+      heartRate: Math.floor(Math.random() * (300 - 1 + 1) + 1),
+    },
+    {
+      id: "DVC002",
+      latitude: Math.floor(Math.random() * (300 - 1 + 1) + 1),
+      longitude: Math.floor(Math.random() * (300 - 1 + 1) + 1),
+      heartRate: Math.floor(Math.random() * (300 - 1 + 1) + 1),
+    },
+    {
+      id: "DVC003",
+      latitude: Math.floor(Math.random() * (300 - 1 + 1) + 1),
+      longitude: Math.floor(Math.random() * (300 - 1 + 1) + 1),
+      heartRate: Math.floor(Math.random() * (300 - 1 + 1) + 1),
+    },
+    {
+      id: "DVC004",
+      latitude: Math.floor(Math.random() * (300 - 1 + 1) + 1),
+      longitude: Math.floor(Math.random() * (300 - 1 + 1) + 1),
+      heartRate: Math.floor(Math.random() * (300 - 1 + 1) + 1),
+    },
+    {
+      id: "DVC005",
+      latitude: Math.floor(Math.random() * (300 - 1 + 1) + 1),
+      longitude: Math.floor(Math.random() * (300 - 1 + 1) + 1),
+      heartRate: Math.floor(Math.random() * (300 - 1 + 1) + 1),
+    },
+  ];
+  socket.emit("update", updateData);
+}
 
-//ngasih tau projek pakai file static/ga berubah2
-app.use(express.static(__dirname));
+function getAllData() {
+  return [
+    {
+      id: "DVC001",
+      latitude: 100,
+      longitude: 100,
+      heartRate: 10,
+    },
+    {
+      id: "DVC002",
+      latitude: 200,
+      longitude: 200,
+      heartRate: 20,
+    },
+    {
+      id: "DVC003",
+      latitude: 300,
+      longitude: 300,
+      heartRate: 30,
+    },
+    {
+      id: "DVC004",
+      latitude: 400,
+      longitude: 400,
+      heartRate: 40,
+    },
+    {
+      id: "DVC005",
+      latitude: 500,
+      longitude: 500,
+      heartRate: 50,
+    },
+  ];
+}
 
-//bikin database
-var mongoose = require('mongoose');
+function sendAllData(socket) {
+  socket.emit("devices", getAllData());
+}
 
-//url database
-var dbUrl= 'mongodb+srv://root:qweasd@sampurasun.fsols.mongodb.net/sampurasun';
+// Send current time every 10 secs
+// setInterval(updateData, 10000);
 
-mongoose.connect(dbUrl, { useNewUrlParser: true, useUnifiedTopology: true }), (err) => { 
-    console.log('mongodb connected',err)
- }
+// Initial connection
+io.on("connection", function (socket) {
+  socket.on("list of device", () => sendAllData(socket));
+});
 
-var Message = mongoose.model('Message',{ name : String, message : String})
-
-//body parser
- var bodyParser = require('body-parser')
- app.use(bodyParser.json());
- app.use(bodyParser.urlencoded({extended: false}))
-
-// Routing = 
-// get route
-app.get('/messages', (req, res) => {
-    Message.find({},(err, messages)=> {
-      res.send(messages);
-    })
-  })
-
-//post route
-app.post('/messages', (req, res) => {
-    var message = new Message(req.body);
-    message.save((err) =>{
-      if(err)
-        sendStatus(500);
-      io.emit('message', req.body);
-      res.sendStatus(200);
-    })
-  })
-
-//trouble hanya bisa muncul pesan ketika di refresh, solusi dengan socket .io
-var http = require('http').Server(app);
-var io = require('socket.io')(http);
-
-io.on('connection', () =>{
-    console.log('a user is connected')
-   })
-
-
-mongoose.connect(dbUrl ,{useMongoClient : true} ,(err) => {
-    console.log('mongodb connected',err);
-  })
-  
-var server = http.listen(3001, () => {
-    console.log('server is running on port', server.address().port);
-  });
+http.listen(3000, () => {
+  console.log("listening on *:3000");
+});
